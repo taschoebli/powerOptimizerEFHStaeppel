@@ -7,27 +7,58 @@ using System.Threading.Tasks;
 
 namespace powerOptimizerEFHStaeppel
 {
-    public class Logger
+    public class Logger : ILogger
     {
-        //private StreamWriter? _streamWriter;
+        #region private Fields
+        
+        #endregion
+
+        #region Properties
+
+        public IList<string> MessageLineItems { get; } = new List<string>();
 
         private string LogFilePath => $"PV_Log_{DateTime.Now.ToShortDateString()}.txt";
-        //private StreamWriter Writer => _streamWriter ??= CreateStreamWriter();
 
-        public void Log(string logMessage)
+        #endregion
+
+        #region Methods
+
+        public void AddMessageLine(string message)
         {
-            using (StreamWriter writer = CreateStreamWriter())
+            if (message != null)
             {
-                writer.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToShortDateString()} {logMessage}");
-#if DEBUG
-                Console.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToShortDateString()} {logMessage}");
-#endif
+                MessageLineItems?.Add(message);
             }
         }
+
+        public void WriteMessagesToLogfile()
+        {
+            using StreamWriter writer = CreateStreamWriter();
+            writer.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToShortDateString()}");
+            foreach ( var messageLine in MessageLineItems )
+            {
+                writer.WriteLine( messageLine );
+            }
+#if DEBUG
+            Console.WriteLine($"{DateTime.Now.ToLongTimeString()} {DateTime.Now.ToShortDateString()}");
+            foreach (var messageLine in MessageLineItems)
+            {
+                Console.WriteLine(messageLine);
+            }
+#endif
+            MessageLineItems.Clear();
+        }
+
+        #region Factory
 
         protected virtual StreamWriter CreateStreamWriter()
         {
             return File.AppendText(LogFilePath);
         }
+
+        #endregion
+
+        #endregion
+
     }
 }
