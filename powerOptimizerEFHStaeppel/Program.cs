@@ -24,11 +24,13 @@ const string IPAddress = "192.168.1.125"; // WiNet Espressif 192.168.1.125, LAN 
 const ushort MaxWriteTimeout = 10000;
 const ushort MaxReadTimeout = 10000;
 
+Console.WriteLine("This is the pv optimizer EFH Stäppel. Press any key to stop application and just wait...");
+Console.WriteLine("Wait 10s");
+Thread.Sleep(10000);
 
 var client = new ModbusTcpClient();
-var logger = new Logger();
-
-Console.WriteLine("This is the pv optimizer EFH Stäppel. Press any key to stop application and just wait...");
+var dateTimeProvider = new DateTimeProvider();
+var logger = new Logger(dateTimeProvider);
 
 logger.AddMessageLine($"connecting to {IPAddress}");
 client.Connect(System.Net.IPAddress.Parse(IPAddress), ModbusEndianness.BigEndian);
@@ -42,6 +44,9 @@ var waterHeatPumpEnabled = false;
 if (client.IsConnected)
 {
     logger.AddMessageLine("client connected.");
+    logger.AddMessageLine("read inverter value on startup start:");
+    ReadLoadSwitch(true);
+    logger.AddMessageLine("read inverter value on startup finish:");
 
     //logger.Log($"Set Load 1 OFF");
     //client.WriteSingleRegister(unitIdentifier, Load1Address, Load1OFF);
@@ -92,20 +97,7 @@ while (client.IsConnected && (Console.KeyAvailable == false))
     var batteryLevel = batteryLevelData[0];
     logger.AddMessageLine($"battery level: {batteryLevel}");
 
-    var holdingData = client.ReadHoldingRegisters<ushort>(unitIdentifier, Load1Address, count);
-    var load1Switch = holdingData[0];
-    var load1HexAsString = load1Switch.ToString("X2");
-    string loadValue = "undefined";
-
-    if (load1HexAsString == "AA")
-    {
-        loadValue = "enabled";
-    }
-    else if (load1HexAsString == "55")
-    {
-        loadValue = "disabled";
-    }
-    logger.AddMessageLine($"load switch: {loadValue}");
+    ReadLoadSwitch();
 
     //var loadAdjustmentData = client.ReadHoldingRegisters<ushort>(unitIdentifier, Load1AdjustmentModeAddress, count);
     //var loadAdjustmentMode = loadAdjustmentData[0];
@@ -138,5 +130,31 @@ logger.AddMessageLine($"is connected: {client.IsConnected} & dispose called");
 client.Dispose();
 logger.AddMessageLine("bye bye");
 logger.WriteMessagesToLogfile();
+
+void ReadLoadSwitch(bool waterHeatPumpOverrideEnabled = false)
+{
+    var holdingData = client.ReadHoldingRegisters<ushort>(unitIdentifier, Load1Address, count);
+    var load1Switch = holdingData[0];
+    var load1HexAsString = load1Switch.ToString("X2");
+    string loadValue = "undefined";
+
+    if (load1HexAsString == "AA")
+    {
+        loadValue = "enabled";
+        if (waterHeatPumpOverrideEnabled)
+        {
+            waterHeatPumpEnabled = true;
+        }
+    }
+    else if (load1HexAsString == "55")
+    {
+        loadValue = "disabled";
+        if (waterHeatPumpOverrideEnabled)
+        {
+            waterHeatPumpEnabled = false;
+        }
+    }
+    logger.AddMessageLine($"load switch: {loadValue}");
+}
 
 //client.WriteSingleRegister(unitIdentifier, Load1AdjustmentModeAddress, 0x0000); // 0: Timing mode, 1: On/Off mode

@@ -60,6 +60,23 @@ namespace powerOptimizerEFHStaeppel.Tests
             Assert.AreEqual(1, logger?.MessageLineItems.Count);
         }
 
+        [Test]
+        public void WriteMessagesToLogFile_ShouldCreateLogFileWithCorrectFileName()
+        {
+            //Arrange
+            TestData.SetupDateTimeNow();
+
+            var logger = TestData.Logger;
+
+            //Act
+            logger?.WriteMessagesToLogfile();
+
+            //Assert
+            Assert.IsTrue(File.Exists(TestData.FileName));
+            File.Delete(TestData.FileName);
+
+        }
+
         #endregion
     }
 }
