@@ -18,6 +18,7 @@ const ushort Load1OFF = 0x0055;
 const short WaterHeatPumpThresholdPower = 1500;
 
 const ushort BatteryLevelThreshold = 950;
+const ushort BatteryLevelLowerThreshold = 10;
 
 // Inverter IP Address
 const string IPAddress = "192.168.1.125"; // WiNet Espressif 192.168.1.125, LAN connector 192.168.1.172
@@ -105,7 +106,7 @@ while (client.IsConnected && (Console.KeyAvailable == false))
     //logger.Log($"Load 1 Adjustment Mode as hex value:{loadAdjustmentModeHexAsString}");
 
 
-    if (!waterHeatPumpEnabled && (DCPower - (WaterHeatPumpThresholdPower + loadPower) > 0) && (exportPower > 0) && (batteryLevel > BatteryLevelThreshold))
+    if (!waterHeatPumpEnabled && (DCPower - (WaterHeatPumpThresholdPower + loadPower) > 0) && (exportPower > 0) && ((batteryLevel > BatteryLevelThreshold) || (BatteryLevelLowerThreshold < 10)))
     {
         waterHeatPumpEnabled = true;
         client.WriteSingleRegister(unitIdentifier, Load1Address, Load1ON);
