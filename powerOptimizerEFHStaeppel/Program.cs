@@ -106,7 +106,7 @@ while (client.IsConnected && (Console.KeyAvailable == false))
     //logger.Log($"Load 1 Adjustment Mode as hex value:{loadAdjustmentModeHexAsString}");
 
 
-    if (!waterHeatPumpEnabled && (DCPower - (WaterHeatPumpThresholdPower + loadPower) > 0) && (exportPower > 0) && ((batteryLevel > BatteryLevelThreshold) || (BatteryLevelLowerThreshold < 10)))
+    if (!waterHeatPumpEnabled && (DCPower - (WaterHeatPumpThresholdPower + loadPower) > 0) && (exportPower > 0) && ((batteryLevel > BatteryLevelThreshold) || (batteryLevel < BatteryLevelLowerThreshold)))
     {
         waterHeatPumpEnabled = true;
         client.WriteSingleRegister(unitIdentifier, Load1Address, Load1ON);
